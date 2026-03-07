@@ -43,34 +43,25 @@ Add to your MCP config:
 }
 ```
 
-### Run Locally
+### Run Locally (stdio)
 
 ```bash
-npm install
-npm run dev
+npx @mbrassey/solentic-mcp
 ```
 
-### Docker
+Or clone and run:
 
 ```bash
-docker build -t solentic-mcp .
-docker run -p 3000:3000 solentic-mcp
+npm install && npm run build
+node dist/server.js
 ```
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `API_BASE` | `https://solentic.theblueprint.xyz` | Blueprint API base URL |
-| `PORT` | `3000` | Server port |
-| `HOST` | `0.0.0.0` | Server host |
 
 ## Architecture
 
-This is a lightweight MCP proxy that wraps the [Blueprint REST API](https://solentic.theblueprint.xyz/api-docs). No Solana RPC access, no private keys, no state — just HTTP calls to the public API.
+Lightweight MCP proxy (stdio transport) that wraps the [Blueprint REST API](https://solentic.theblueprint.xyz/api-docs). No Solana RPC access, no private keys, no state — just HTTP calls to the public API.
 
 ```
-AI Agent → MCP Server → Blueprint REST API → Solana
+AI Agent → MCP Server (stdio) → Blueprint REST API → Solana
 ```
 
 ## Links
