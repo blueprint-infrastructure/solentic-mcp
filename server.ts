@@ -1,12 +1,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import Fastify from 'fastify';
-import { streamableHttp } from 'fastify-mcp';
 
 // ── Config ───────────────────────────────────────────────
 const API_BASE = process.env.API_BASE || 'https://solentic.theblueprint.xyz';
-const PORT = parseInt(process.env.PORT || '3000', 10);
-const HOST = process.env.HOST || '0.0.0.0';
 
 // ── Annotation presets ───────────────────────────────────
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true } as const;
@@ -368,18 +365,7 @@ function createMcpServer(): McpServer {
   return mcp;
 }
 
-// ── Fastify + MCP mount ──────────────────────────────────
-const app = Fastify({ logger: true });
-
-app.get('/health', async () => ({ status: 'ok', service: 'solentic-mcp', tools: 18 }));
-
-const mcpServerFactory = () => (createMcpServer() as any).server;
-
-await app.register(streamableHttp, {
-  stateful: false,
-  mcpEndpoint: '/mcp',
-  createServer: mcpServerFactory,
-});
-
-await app.listen({ port: PORT, host: HOST });
-console.log(`Solentic MCP server listening on ${HOST}:${PORT}`);
+// ── Start ───────────────────────────────────────────────
+const mcp = createMcpServer();
+const transport = new StdioServerTransport();
+await (mcp as any).server.connect(transport);
