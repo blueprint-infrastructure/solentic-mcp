@@ -1,6 +1,6 @@
 {
   "name": "@mbrassey/solentic-mcp",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "MCP server for Blueprint Agentic Staking — native Solana staking infrastructure for AI agents",
   "type": "module",
   "main": "dist/server.js",
