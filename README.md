@@ -4,6 +4,10 @@ Standalone [Model Context Protocol](https://modelcontextprotocol.io/) server for
 
 18 MCP tools wrapping the Blueprint REST API. Zero custody — all transactions are unsigned, agents sign client-side.
 
+<a href="https://glama.ai/mcp/servers/@blueprint-infrastructure/solentic">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@blueprint-infrastructure/solentic/badge" alt="Solentic MCP server" />
+</a>
+
 ## Tools
 
 | Tool | Description | Type |
