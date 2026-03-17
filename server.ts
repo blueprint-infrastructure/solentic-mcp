@@ -33,8 +33,9 @@ function result(data: unknown, meta?: Record<string, unknown>) {
   return { content: [{ type: 'text' as const, text: JSON.stringify(content, null, 2) }] };
 }
 
-function error(message: string, relatedTools?: Record<string, string>) {
+function error(message: string, relatedTools?: Record<string, string>, errorCode?: string) {
   const payload: Record<string, unknown> = { error: message };
+  if (errorCode) payload.errorCode = errorCode;
   if (relatedTools) payload._meta = { relatedTools };
   return { content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }], isError: true };
 }
@@ -218,7 +219,14 @@ function createMcpServer(): McpServer {
     },
     async ({ signedTransaction }) => {
       const { ok, data } = await api('POST', '/api/v1/transaction/submit', { signedTransaction });
-      if (!ok) return error(`Transaction failed: ${JSON.stringify(data)}`, { retry: 'submit_transaction', accounts: 'check_stake_accounts' });
+      if (!ok) {
+        const resp = data as Record<string, unknown>;
+        const code = typeof resp.errorCode === 'string' ? resp.errorCode : undefined;
+        const tools: Record<string, string> = code === 'BLOCKHASH_EXPIRED'
+          ? { stake: 'create_stake_transaction', unstake: 'create_unstake_transaction', withdraw: 'withdraw_stake' }
+          : { retry: 'submit_transaction', accounts: 'check_stake_accounts' };
+        return error(typeof resp.message === 'string' ? resp.message : `Transaction failed: ${JSON.stringify(data)}`, tools, code);
+      }
       return result(data, { relatedTools: { verify: 'verify_transaction', accounts: 'check_stake_accounts', stake: 'create_stake_transaction' } });
     }
   );
