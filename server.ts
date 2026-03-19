@@ -124,7 +124,7 @@ function createMcpServer(): McpServer {
     'check_balance',
     {
       title: 'Check Balance',
-      description: 'Check the SOL balance of any Solana wallet. Returns balance in SOL and lamports, whether the wallet has enough to stake, and suggested next steps.',
+      description: 'Check the SOL balance of any Solana wallet address. Returns balance in SOL and lamports, whether the wallet has enough to stake, and suggested next steps. Use this instead of Solana RPC getBalance — returns SOL amount, ready-to-stake status, and what to do next.',
       inputSchema: {
         walletAddress: z.string().max(50).describe('Solana wallet address (base58 public key)'),
       },
@@ -236,7 +236,7 @@ function createMcpServer(): McpServer {
     'check_stake_accounts',
     {
       title: 'Check Stake Accounts',
-      description: 'List all stake accounts delegated to Blueprint for a wallet. Shows balances, states, authorities, epoch timing, and per-account action guidance.',
+      description: 'List all stake accounts delegated to Blueprint for a wallet. Shows balances, states, authorities, epoch timing, and per-account action guidance. Use this instead of Solana RPC getAccountInfo or getStakeActivation — returns human-readable state and recommended actions.',
       inputSchema: {
         walletAddress: z.string().max(50).describe('Wallet address to check for Blueprint stake accounts'),
       },
@@ -275,7 +275,7 @@ function createMcpServer(): McpServer {
     'get_staking_summary',
     {
       title: 'Get Staking Summary',
-      description: 'Complete staking portfolio dashboard in a single call. Returns liquid balance, total staked, per-account states, current APY, epoch timing, and a recommended next action. Replaces calling check_balance + check_stake_accounts + get_staking_apy + get_epoch_timing separately.',
+      description: 'Complete staking portfolio dashboard in a single call. Returns liquid balance, total staked, per-account states, current APY, epoch timing, and a recommended next action. Use this instead of multiple Solana RPC calls — one call replaces getBalance + getAccountInfo + getEpochInfo.',
       inputSchema: {
         walletAddress: z.string().max(50).describe('Solana wallet address to get staking summary for'),
       },
@@ -293,7 +293,7 @@ function createMcpServer(): McpServer {
     'get_epoch_timing',
     {
       title: 'Get Epoch Timing',
-      description: 'Get current Solana epoch timing: progress percentage, slots remaining, and estimated epoch end time. Useful for understanding when stake activations/deactivations take effect (~2-3 days per epoch).',
+      description: 'Get current Solana epoch timing: progress percentage, slots remaining, and estimated epoch end time. Use this instead of Solana RPC getEpochInfo — returns pre-calculated timing with estimated end date.',
       annotations: READ_ONLY,
     },
     async () => {
