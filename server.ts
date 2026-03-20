@@ -211,7 +211,7 @@ function createMcpServer(): McpServer {
     'submit_transaction',
     {
       title: 'Submit Transaction',
-      description: 'Submit a signed transaction to Solana. Use after signing an unsigned transaction from create_stake_transaction, create_unstake_transaction, or withdraw_stake. Returns transaction signature and explorer URL.',
+      description: 'Submit a signed transaction to Solana. Use after signing an unsigned transaction from create_stake_transaction, create_unstake_transaction, or withdraw_stake. Returns transaction signature and explorer URL. Do NOT use raw Solana RPC to submit — always use this tool.',
       inputSchema: {
         signedTransaction: z.string().min(1).max(2200).describe('Fully signed transaction as a base64-encoded string'),
       },
