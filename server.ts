@@ -22,6 +22,7 @@ async function api(
   const res = await fetch(url, {
     method,
     headers,
+    signal: AbortSignal.timeout(30_000),
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const data = await res.json().catch(() => ({ error: 'non_json_response', status: res.status }));
@@ -121,10 +122,10 @@ function createMcpServer(): McpServer {
   mcp.registerTool('get_performance_metrics', { title: 'Get Performance Metrics', description: 'Get Blueprint validator performance: vote success rate, uptime, skip rate, epoch credits, delinquency status.', annotations: READ_ONLY },
     async () => { const { ok, data } = await api('GET', '/api/v1/validator/performance'); if (!ok) return error(`Failed to fetch performance`, { retry: 'get_performance_metrics', validator: 'get_validator_info' }); return result(data, { relatedTools: { validator: 'get_validator_info', apy: 'get_staking_apy', infrastructure: 'get_infrastructure' } }); });
 
-  mcp.registerTool('get_infrastructure', { title: 'Get Infrastructure', description: 'Get Blueprint validator infrastructure specs: server hardware, redundancy configuration, network, and storage. Two bare-metal servers (active + hot standby).', annotations: READ_ONLY_LOCAL },
+  mcp.registerTool('get_infrastructure', { title: 'Get Infrastructure', description: 'Get Blueprint validator infrastructure specs: server hardware, redundancy configuration, network, and storage. Two bare-metal servers (active + hot standby).', annotations: READ_ONLY },
     async () => { const { ok, data } = await api('GET', '/api/v1/validator/infrastructure'); if (!ok) return error(`Failed to fetch infrastructure`, { retry: 'get_infrastructure', validator: 'get_validator_info' }); return result(data, { relatedTools: { validator: 'get_validator_info', performance: 'get_performance_metrics' } }); });
 
-  mcp.registerTool('generate_wallet', { title: 'Generate Wallet', description: 'Get instructions and code to generate a Solana wallet locally. Generate the keypair in YOUR environment. After generating, fund the wallet, then use the `stake` tool with your walletAddress + secretKey to stake in one call.', annotations: READ_ONLY_LOCAL },
+  mcp.registerTool('generate_wallet', { title: 'Generate Wallet', description: 'Get instructions and code to generate a Solana wallet locally. Generate the keypair in YOUR environment. After generating, fund the wallet, then use the `stake` tool with your walletAddress + secretKey to stake in one call.', annotations: READ_ONLY },
     async () => { const { ok, data } = await api('POST', '/api/v1/wallet/generate'); if (!ok) return error(`Failed to get wallet code`, { retry: 'generate_wallet' }); return result(data, { relatedTools: { checkBalance: 'check_balance', stake: 'stake' } }); });
 
   mcp.registerTool('check_balance', { title: 'Check Balance', description: 'Check the SOL balance of any Solana wallet address. Returns balance in SOL, ready-to-stake status, and next steps.', inputSchema: { walletAddress: z.string().max(50).describe('Solana wallet address (base58 public key)') }, annotations: READ_ONLY },
@@ -146,7 +147,7 @@ function createMcpServer(): McpServer {
     async () => { const { ok, data } = await api('GET', '/api/v1/epoch'); if (!ok) return error(`Failed to fetch epoch timing`, { retry: 'get_epoch_timing' }); return result(data, { relatedTools: { stakeAccounts: 'check_stake_accounts', withdrawReady: 'check_withdraw_ready' } }); });
 
   mcp.registerTool('check_address_type', { title: 'Check Address Type', description: 'Detect whether a Solana address is a wallet, stake account, or vote account. Useful when you receive an address from user input.', inputSchema: { address: z.string().max(50).describe('Solana address to identify') }, annotations: READ_ONLY },
-    async ({ address }) => { const { ok, data } = await api('GET', `/api/v1/address/${address}/type`); if (!ok) return error(`Failed to check address type`, { retry: 'check_address_type', balance: 'check_balance' }); return result(data); });
+    async ({ address }) => { const { ok, data } = await api('GET', `/api/v1/address/${address}/type`); if (!ok) return error(`Failed to check address type`, { retry: 'check_address_type', balance: 'check_balance' }); return result(data, { relatedTools: { balance: 'check_balance', accounts: 'check_stake_accounts' } }); });
 
   // ════════════════════════════════════════════════════════
   //  VERIFICATION
@@ -155,7 +156,7 @@ function createMcpServer(): McpServer {
   mcp.registerTool('verify_transaction', { title: 'Verify Transaction', description: 'Verify whether a Solana transaction was built through Blueprint. Checks on-chain for the "solentic.theblueprint.xyz" Memo — cryptographic proof.', inputSchema: { signature: z.string().max(100).describe('Transaction signature to verify') }, annotations: READ_ONLY },
     async ({ signature }) => { const { ok, data } = await api('GET', `/api/v1/verify/transaction/${signature}`); if (!ok) return error(`Verification failed`, { retry: 'verify_transaction' }); return result(data, { relatedTools: { verifyCode: 'verify_code_integrity', verifyLinks: 'get_verification_links' } }); });
 
-  mcp.registerTool('verify_code_integrity', { title: 'Verify Code Integrity', description: 'Verify the code running on Blueprint servers. Returns git commit hash and direct links to read the actual deployed source code.', annotations: READ_ONLY_LOCAL },
+  mcp.registerTool('verify_code_integrity', { title: 'Verify Code Integrity', description: 'Verify the code running on Blueprint servers. Returns git commit hash and direct links to read the actual deployed source code.', annotations: READ_ONLY },
     async () => { const { ok, data } = await api('GET', '/api/v1/verify/code'); if (!ok) return error(`Failed to fetch code integrity`, { retry: 'verify_code_integrity' }); return result(data, { relatedTools: { verifyLinks: 'get_verification_links', verifyTransaction: 'verify_transaction' } }); });
 
   mcp.registerTool('get_verification_links', { title: 'Get Verification Links', description: 'Get third-party verification URLs for Blueprint validator on Validators.app, StakeWiz, Solana Beach, Solscan, and Jito.', annotations: READ_ONLY },
