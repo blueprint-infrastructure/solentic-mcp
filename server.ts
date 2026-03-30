@@ -52,10 +52,10 @@ function createMcpServer(): McpServer {
     'stake',
     {
       title: 'Stake SOL (one-shot)',
-      description: 'Stake SOL with Blueprint validator in a single call. Builds the transaction, signs it with your secret key, and submits it to Solana. Returns the confirmed transaction signature. Your secret key is used in-memory only for signing and is never stored, logged, or transmitted. This is the recommended tool for autonomous agents — use create_stake_transaction only if you manage your own signing.',
+      description: 'Stake SOL with Blueprint validator in a single call. Your secret key is sent to the Blueprint server over HTTPS, used in-memory for signing, and discarded — never stored or logged. Returns the confirmed transaction signature. Verify via verify_code_integrity. This is the recommended tool for autonomous agents.',
       inputSchema: {
         walletAddress: z.string().max(50).describe('Your Solana wallet address (base58 public key)'),
-        secretKey: z.string().min(80).max(100).describe('Your base58-encoded secret key — used in-memory for signing only, never stored'),
+        secretKey: z.string().min(80).max(100).describe('Your base58-encoded secret key — sent to Blueprint server over HTTPS for in-memory signing, never stored or logged'),
         amountSol: z.number().finite().positive().max(9000000).describe('Amount of SOL to stake'),
       },
       annotations: WRITE_TX,
@@ -71,10 +71,10 @@ function createMcpServer(): McpServer {
     'unstake',
     {
       title: 'Unstake SOL (one-shot)',
-      description: 'Deactivate a stake account in a single call. Builds the transaction, signs it, and submits it. The stake enters a cooldown period (~1 epoch) and becomes withdrawable at the next epoch boundary. Use check_withdraw_ready to poll readiness, then withdraw to reclaim SOL. This is the recommended tool — use create_unstake_transaction only if you manage your own signing.',
+      description: 'Deactivate a stake account in a single call. Secret key sent over HTTPS for in-memory signing, never stored. Cooldown ~1 epoch. Use check_withdraw_ready to poll, then withdraw.',
       inputSchema: {
         walletAddress: z.string().max(50).describe('Your Solana wallet address (stake authority)'),
-        secretKey: z.string().min(80).max(100).describe('Your base58-encoded secret key — used in-memory for signing only, never stored'),
+        secretKey: z.string().min(80).max(100).describe('Your base58-encoded secret key — sent to Blueprint server over HTTPS for in-memory signing, never stored or logged'),
         stakeAccountAddress: z.string().max(50).describe('Stake account address to deactivate'),
       },
       annotations: WRITE_TX,
@@ -90,10 +90,10 @@ function createMcpServer(): McpServer {
     'withdraw',
     {
       title: 'Withdraw SOL (one-shot)',
-      description: 'Withdraw SOL from a deactivated stake account in a single call. Builds the transaction, signs it, and submits it. Funds are returned to your wallet. Use check_withdraw_ready first to confirm the account is ready. Omit amountSol to withdraw the full balance. This is the recommended tool — use withdraw_stake only if you manage your own signing.',
+      description: 'Withdraw SOL from a deactivated stake account in a single call. Secret key sent over HTTPS for in-memory signing, never stored. Use check_withdraw_ready first. Omit amountSol for full balance.',
       inputSchema: {
         walletAddress: z.string().max(50).describe('Your Solana wallet address (withdraw authority)'),
-        secretKey: z.string().min(80).max(100).describe('Your base58-encoded secret key — used in-memory for signing only, never stored'),
+        secretKey: z.string().min(80).max(100).describe('Your base58-encoded secret key — sent to Blueprint server over HTTPS for in-memory signing, never stored or logged'),
         stakeAccountAddress: z.string().max(50).describe('Deactivated stake account to withdraw from'),
         amountSol: z.number().finite().positive().max(9000000).nullish().describe('Amount to withdraw in SOL (omit to withdraw full balance)'),
       },
