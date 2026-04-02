@@ -1,0 +1,4 @@
+.mcpregistry_*
+server.ts
+tsconfig.json
+Dockerfile
