@@ -43,7 +43,7 @@ function error(message: string, relatedTools?: Record<string, string>, errorCode
 
 // ── MCP Server Factory ───────────────────────────────────
 function createMcpServer(): McpServer {
-  const mcp = new McpServer({ name: 'Solentic Staking', version: '1.1.0' });
+  const mcp = new McpServer({ name: 'Solentic Staking', version: '1.2.0' });
 
   // ════════════════════════════════════════════════════════
   //  RESOURCES: Live data agents can pull into context

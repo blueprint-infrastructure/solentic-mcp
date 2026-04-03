@@ -1,6 +1,6 @@
 {
   "name": "@solentic/mcp-server",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "mcpName": "io.github.blueprint-infrastructure/solentic",
   "description": "MCP server for Blueprint Agentic Staking — native Solana staking infrastructure for AI agents",
   "type": "module",
