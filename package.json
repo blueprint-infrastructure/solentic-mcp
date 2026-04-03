@@ -5,6 +5,7 @@
   "description": "MCP server for Blueprint Agentic Staking — native Solana staking infrastructure for AI agents",
   "type": "module",
   "main": "dist/server.js",
+  "module": "dist/server.js",
   "bin": {
     "solentic-mcp": "bin/solentic-mcp.js"
   },
@@ -26,11 +27,12 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
+    "esbuild": "^0.28.0",
     "zod": "^3.24.4"
   },
   "devDependencies": {
+    "@types/node": "^22.15.3",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3",
-    "@types/node": "^22.15.3"
+    "typescript": "^5.8.3"
   }
 }

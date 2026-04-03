@@ -201,7 +201,15 @@ function createMcpServer(): McpServer {
   return mcp;
 }
 
+// ── Smithery sandbox export (for tool scanning) ──────────
+export function createSandboxServer() {
+  return createMcpServer();
+}
+
 // ── Start ───────────────────────────────────────────────
-const mcp = createMcpServer();
-const transport = new StdioServerTransport();
-await (mcp as any).server.connect(transport);
+async function main() {
+  const mcp = createMcpServer();
+  const transport = new StdioServerTransport();
+  await (mcp as any).server.connect(transport);
+}
+main().catch((err) => { console.error(err); process.exit(1); });
