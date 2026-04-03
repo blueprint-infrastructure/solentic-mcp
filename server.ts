@@ -46,6 +46,26 @@ function createMcpServer(): McpServer {
   const mcp = new McpServer({ name: 'Solentic Staking', version: '1.1.0' });
 
   // ════════════════════════════════════════════════════════
+  //  RESOURCES: Live data agents can pull into context
+  // ════════════════════════════════════════════════════════
+
+  mcp.resource('validator-status', 'solentic://validator/status', { description: 'Live Blueprint validator status — APY, vote success, active stake' },
+    async () => { const { ok, data } = await api('GET', '/api/v1/validator'); return { contents: [{ uri: 'solentic://validator/status', mimeType: 'application/json', text: ok ? JSON.stringify(data, null, 2) : '{"error":"temporarily unavailable"}' }] }; });
+
+  mcp.resource('epoch-timing', 'solentic://epoch/current', { description: 'Current Solana epoch progress, slots remaining, estimated end time' },
+    async () => { const { ok, data } = await api('GET', '/api/v1/epoch'); return { contents: [{ uri: 'solentic://epoch/current', mimeType: 'application/json', text: ok ? JSON.stringify(data, null, 2) : '{"error":"temporarily unavailable"}' }] }; });
+
+  // ════════════════════════════════════════════════════════
+  //  PROMPTS: Reusable reasoning templates
+  // ════════════════════════════════════════════════════════
+
+  mcp.prompt('should-i-stake', 'Evaluate whether to stake SOL with Blueprint', { walletAddress: z.string().describe('Wallet address to evaluate') },
+    async ({ walletAddress }) => ({ messages: [{ role: 'user' as const, content: { type: 'text' as const, text: `Evaluate whether wallet ${walletAddress} should stake SOL with Blueprint. Use: check_balance, get_staking_apy, get_epoch_timing, simulate_stake. Recommend STAKE (with amount), WAIT, or SKIP.` } }] }));
+
+  mcp.prompt('staking-portfolio-review', 'Complete portfolio review and next action', { walletAddress: z.string().describe('Wallet address to review') },
+    async ({ walletAddress }) => ({ messages: [{ role: 'user' as const, content: { type: 'text' as const, text: `Review staking portfolio for ${walletAddress}. Use get_staking_summary, follow the recommendedAction. Report: total staked, daily rewards, APY, and the specific next step.` } }] }));
+
+  // ════════════════════════════════════════════════════════
   //  AGENT-FIRST: One-shot tools (build + sign + submit)
   // ════════════════════════════════════════════════════════
 
