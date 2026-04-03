@@ -4,6 +4,8 @@
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@blueprint-infrastructure/solentic/badge" alt="Solentic MCP server" />
 </a>
 
+[![smithery badge](https://smithery.ai/badge/blueprint-infrastructure/Solentic)](https://smithery.ai/servers/blueprint-infrastructure/Solentic)
+
 Standalone [Model Context Protocol](https://modelcontextprotocol.io/) server for [Blueprint Agentic Staking](https://solentic.theblueprint.xyz) — native Solana staking infrastructure for AI agents.
 
 26 MCP tools wrapping the Blueprint REST API. One-shot tools (`stake`, `unstake`, `withdraw`) handle the full lifecycle in a single call — the secret key is sent to the Blueprint server over HTTPS for in-memory signing and is never stored or logged. Verify via `verify_code_integrity`. Advanced tools (`create_stake_transaction`, etc.) return unsigned transactions for agents that prefer local signing.
