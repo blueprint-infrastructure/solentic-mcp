@@ -43,7 +43,7 @@ function error(message: string, relatedTools?: Record<string, string>, errorCode
 
 // ── MCP Server Factory ───────────────────────────────────
 function createMcpServer(): McpServer {
-  const mcp = new McpServer({ name: 'Solentic Staking', version: '1.2.0' });
+  const mcp = new McpServer({ name: 'Solentic Staking', version: '1.3.0' });
 
   // ════════════════════════════════════════════════════════
   //  RESOURCES: Live data agents can pull into context
@@ -217,6 +217,22 @@ function createMcpServer(): McpServer {
 
   mcp.registerTool('donate', { title: 'Donate to Blueprint', description: 'Build an unsigned SOL transfer to support Blueprint development. Same zero-custody pattern. Suggested: 0.01 SOL (thank you), 0.1 SOL (generous), 1 SOL (patron).', inputSchema: { walletAddress: z.string().max(50).describe('Wallet address'), amountSol: z.number().finite().positive().min(0.001).max(1000).describe('SOL to donate') }, annotations: WRITE_TX },
     async ({ walletAddress, amountSol }) => { const { ok, data } = await api('POST', '/api/v1/donate', { walletAddress, amountSol }); if (!ok) return error(`Donation failed`, { retry: 'donate', balance: 'check_balance' }); return result(data, { relatedTools: { submit: 'submit_transaction', validator: 'get_validator_info' } }); });
+
+  // ════════════════════════════════════════════════════════
+  //  VERIFICATION + AUTOPILOT (non-custodial automation)
+  // ════════════════════════════════════════════════════════
+
+  mcp.registerTool('verify_stake_transaction', { title: 'Verify Stake Transaction', description: 'Deterministically verify a built stake transaction only delegates to Blueprint with your wallet as both stake and withdraw authority. The fully trustless path is the @solentic/verify npm package run client-side before signing.', inputSchema: { transaction: z.string().describe('base64 unsigned transaction'), walletAddress: z.string().max(50).describe('Your wallet address') }, annotations: READ_ONLY },
+    async ({ transaction, walletAddress }) => { const { ok, data } = await api('POST', '/api/v1/verify/stake-transaction', { transaction, walletAddress }); if (!ok) return error('Verification failed', { stake: 'create_stake_transaction' }); return result(data, { relatedTools: { stake: 'create_stake_transaction', verifyCode: 'verify_code_integrity' } }); });
+
+  mcp.registerTool('set_staking_policy', { title: 'Set Autopilot Staking Policy', description: 'Hand Solentic a standing, signature-bound policy so it automatically stakes your IDLE SOL with Blueprint, zero custody. Sign the policy ONCE with your wallet key (Ed25519, NEVER your secret key). When idle SOL above keepLiquidSol exceeds minSweepSol, Solentic builds an UNSIGNED stake transaction and POSTs it to your callbackUrl to sign and submit. Amounts in the signed message are INTEGER LAMPORTS = round(SOL*1e9). Sign exactly: "solentic-autopilot-policy:v1\\nwallet=<walletAddress>\\nkeepLiquidLamports=<round(keepLiquidSol*1e9)>\\nminSweepLamports=<round(minSweepSol*1e9)>\\ncallbackUrl=<callbackUrl>\\npaused=<true|false>\\nnonce=<nonce>". nonce strictly increases.', inputSchema: { walletAddress: z.string().max(50).describe('Wallet whose idle SOL is managed'), keepLiquidSol: z.number().finite().min(0).max(9000000).describe('SOL to keep liquid'), minSweepSol: z.number().finite().positive().max(9000000).describe('Min idle surplus before staking'), callbackUrl: z.string().url().describe('HTTPS callback URL'), paused: z.boolean().optional().describe('Store but keep inactive'), nonce: z.number().int().nonnegative().describe('Strictly increasing replay guard'), signature: z.string().describe('base58 Ed25519 over the canonical message') }, annotations: WRITE_TX },
+    async (args) => { const { ok, data } = await api('POST', '/api/v1/autopilot/policy', args as Record<string, unknown>); if (!ok) return error('Failed to set policy', { retry: 'set_staking_policy' }); return result(data, { relatedTools: { get: 'get_staking_policy', delete: 'delete_staking_policy' } }); });
+
+  mcp.registerTool('get_staking_policy', { title: 'Get Autopilot Staking Policy', description: 'Read the current Autopilot policy for a wallet (or null if none).', inputSchema: { walletAddress: z.string().max(50).describe('Wallet address') }, annotations: READ_ONLY },
+    async ({ walletAddress }) => { const { ok, data } = await api('GET', `/api/v1/autopilot/policy/${walletAddress}`); if (!ok) return error('Failed to get policy'); return result(data, { relatedTools: { set: 'set_staking_policy', delete: 'delete_staking_policy' } }); });
+
+  mcp.registerTool('delete_staking_policy', { title: 'Delete Autopilot Staking Policy', description: 'Delete a wallet\'s Autopilot policy. Sign exactly: "solentic-autopilot-delete:v1\\nwallet=<walletAddress>\\nnonce=<nonce>" (nonce exceeds the current policy nonce) and pass the base58 signature.', inputSchema: { walletAddress: z.string().max(50).describe('Wallet address'), nonce: z.number().int().nonnegative().describe('Strictly increasing replay guard'), signature: z.string().describe('base58 Ed25519 over the canonical delete message') }, annotations: WRITE_TX },
+    async ({ walletAddress, nonce, signature }) => { const { ok, data } = await api('DELETE', `/api/v1/autopilot/policy/${walletAddress}`, { nonce, signature }); if (!ok) return error('Failed to delete policy', { set: 'set_staking_policy' }); return result(data, { relatedTools: { set: 'set_staking_policy' } }); });
 
   return mcp;
 }
